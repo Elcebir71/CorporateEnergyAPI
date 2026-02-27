@@ -1,0 +1,107 @@
+﻿@page "/"
+@using CorporateEnergyAPI.Interfaces
+@using CorporateEnergyAPI.Models
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+@inject IEnergyService EnergyService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 text-white">
+        <h2 class="fw-bold">⚡ Energy Analysis Dashboard</h2>
+        <button class="btn btn-success fw-bold" @onclick="ExportToExcel">Exporteer naar Excel</button>
+    </div>
+
+    @if (dashboardData == null)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-white mt-2">Gegevens worden geladen...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card text-white p-3 shadow">
+                    <small class="text-info fw-bold">GEMIDDELD</small>
+                    <h3 class="fw-bold">@dashboardData.AverageUsage.ToString("N2") kW</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-white p-3 shadow">
+                    <small class="text-warning fw-bold">PIEK</small>
+                    <h3 class="fw-bold text-warning">@dashboardData.PeakUsage.ToString("N2") kW</h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card @(dashboardData.PeakUsage > 1000 ? "bg-danger" : "bg-dark") text-white shadow p-3">
+                    <small class="fw-bold">STATUS</small>
+                    <h3 class="fw-bold">
+                        @(dashboardData.PeakUsage > 1000 ? "⚠️ Kritiek" : "Stabiel")
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 mb-4 shadow">
+            <div style="height: 350px; width: 100%;">
+                <canvas id="energyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card shadow overflow-hidden">
+            <table class="table table-dark table-hover mb-0">
+                <thead class="table-secondary text-dark">
+                    <tr>
+                        <th>Tijdstip</th>
+                        <th>Sensor</th>
+                        <th class="text-end">Waarde (kW)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in dashboardData.TableReadings)
+                    {
+                        <tr>
+                            <td class="text-info">@item.Timestamp.ToString("HH:mm:ss")</td>
+                            <td>@item.SensorName</td>
+                            <td class="text-end fw-bold text-white">@item.Value.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private EnergyDashboardViewModel? dashboardData;
+    private bool _chartRendered;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dashboardData = await EnergyService.GetDashboardSummaryAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_chartRendered || dashboardData?.AllReadings == null || dashboardData.AllReadings.Count == 0)
+            return;
+
+        await Task.Delay(100);
+
+        var labels = dashboardData.AllReadings.Select(r => r.Timestamp.ToString("dd/MM")).ToArray();
+        var values = dashboardData.AllReadings.Select(r => r.Value).ToArray();
+
+        await JSRuntime.InvokeVoidAsync("setupLineChart", "energyChart", labels, values);
+        _chartRendered = true;
+    }
+
+    private async Task ExportToExcel()
+    {
+        if (dashboardData?.AllReadings == null)
+            return;
+
+        await JSRuntime.InvokeVoidAsync("downloadCsvFromBlazor", "Energie_Rapport.csv", dashboardData.AllReadings);
+    }
+}

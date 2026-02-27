@@ -1,37 +1,43 @@
+﻿using CorporateEnergyAPI;
 using CorporateEnergyAPI.Data;
+using CorporateEnergyAPI.Interfaces;
+using CorporateEnergyAPI.Repositories;
+using CorporateEnergyAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- Services Configuration ---
-
-// Voeg ondersteuning toe voor Controllers (API-eindpunten)
-builder.Services.AddControllers();
-
-// Configureer de SQL Server verbinding met de connection string uit appsettings.json
-// Dit is de 'brug' naar onze database.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Voeg Swagger/OpenAPI toe voor documentatie (handig voor testen)
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IIndustrialReadingRepository, IndustrialReadingRepository>();
+builder.Services.AddScoped<IEnergyService, EnergyService>();
+builder.Services.AddScoped<IEnergyRepository, EnergyRepository>();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Corporate Energy API", Version = "v1" });
+});
 
 var app = builder.Build();
 
-// --- HTTP Request Pipeline ---
-
-// Schakel Swagger in als we in de ontwikkelmodus zijn
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CorporateEnergyAPI v1"));
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseAuthorization();
-
-// Map de controllers zodat de API bereikbaar is
+app.UseAntiforgery();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 app.MapControllers();
 
 app.Run();

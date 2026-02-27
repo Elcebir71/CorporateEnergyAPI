@@ -1,0 +1,60 @@
+﻿
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 77, 77, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
+    }
+}
+
+
+.card {
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+/* Volledige Dark Mode styling voor het Dashboard */
+body {
+    background-color: #050505 !important; /* Git siyah arka plan */
+    color: #ffffff !important; /* Ana metin rengi saf beyaz */
+}
+
+.main-content {
+    background-color: #050505 !important;
+}
+
+/* Kaarten met hoog contrast (Yüksek kontrastlı kartlar) */
+.card {
+    background-color: #121212 !important;
+    border: 1px solid #333333 !important;
+    border-radius: 12px;
+}
+
+/* Tabel tekst zichtbaarheid (Tablo metni görünürlüğü) */
+.table {
+    color: #e0e0e0 !important; /* Açık gri/beyaz yazılar */
+}
+
+    .table thead th {
+        background-color: #1a1a1a !important;
+        color: #00d4ff !important; /* Neon mavi başlıklar */
+        border-bottom: 2px solid #333;
+    }
+
+/* Accent kleuren voor labels */
+.text-muted-dutch {
+    color: #b0b0b0 !important; /* Hollandaca alt başlıklar için daha okunaklı gri */
+}

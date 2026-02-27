@@ -1,0 +1,303 @@
+﻿<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Corporate Energy Dashboard - Dark Mode</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        /* Donker thema basisinstellingen */
+        body {
+            background-color: #0b0e14;
+            color: #e0e0e0;
+            padding: 40px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Kaarten met een donkerdere tint en subtiele randen */
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .header-title {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* Neon groene status badge */
+        .status-badge {
+            background-color: #238636;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            box-shadow: 0 0 10px rgba(35, 134, 54, 0.5);
+        }
+
+        /* Tabel aanpassingen voor donkere modus */
+        .table {
+            color: #e0e0e0;
+        }
+
+        .table-light {
+            background-color: #21262d;
+            color: #ffffff;
+            border-color: #30363d;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #1c2128;
+            color: #58a6ff;
+        }
+
+        .text-primary {
+            color: #58a6ff !important;
+        }
+
+        .text-muted {
+            color: #8b949e !important;
+        }
+
+        .chart-container {
+            padding: 0 !important;
+            overflow: hidden;
+            position: relative;
+            height: 400px;
+        }
+
+        .btn-outline-primary {
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+            .btn-outline-primary:hover {
+                background-color: #58a6ff;
+                color: #ffffff;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="header-title">⚡ Energieverbruik Dashboard</h2>
+            <span class="status-badge">Systeem Live: Docker SQL 2025</span>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card p-3 text-center">
+                    <h6 class="text-muted">Gemiddeld Verbruik</h6>
+                    <h3 class="text-primary" id="avgWidget">0,00 kW</h3>
+                    <small class="text-muted">Laatste 30 dagen</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card p-3 text-center">
+                    <h6 class="text-muted">Piekbelasting</h6>
+                    <h3 class="text-warning" id="peakWidget">0,00 kW</h3>
+                    <small class="text-muted">Hoogste meetpunt</small>
+                </div>
+            </div>
+            <div class="col-md-4" id="statusWidgetParent">
+                <div class="card p-3 text-center">
+                    <h6 class="text-muted">Systeem Status</h6>
+                    <h3 class="text-success" id="statusText">Operationeel</h3>
+                    <small class="text-muted">AI Analyse Actief</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="p-4 pb-0">
+                <h5 class="text-muted">Maandelijkse Trend: Utrecht Grid North</h5>
+            </div>
+            <div class="card-body chart-container">
+                <canvas id="energyChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card p-4">
+            <h5 class="mb-3 text-muted">Laatste 5 metingen</h5>
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Sensor Naam</th>
+                        <th>Waarde (kW)</th>
+                        <th>Tijdstip</th>
+                    </tr>
+                </thead>
+                <tbody id="readingTable">
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-end mt-2 gap-2">
+                <button onclick="exportEnergyDataToCSV()" class="btn btn-outline-success">Exporteren naar Excel (CSV)</button>
+                <button onclick="loadData()" class="btn btn-outline-primary">Gegevens Vernieuwen</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let myChart;
+
+        // Haal de data op van de API
+        async function loadData() {
+            try {
+                const response = await fetch('/api/IndustrialReading');
+                const data = await response.json();
+                renderTable(data);
+                renderChart(data);
+                updateDashboardWidgets(data);
+            } catch (error) {
+                console.error('Fout bij het laden van data:', error);
+            }
+        }
+
+        function updateDashboardWidgets(data) {
+            if (!data || data.length === 0) return;
+
+            // Numerieke waarden ophalen voor berekening
+            const values = data.map(item => parseFloat(item.value));
+            const average = values.reduce((a, b) => a + b, 0) / values.length;
+            const peak = Math.max(...values);
+
+            // Formatteren naar Nederlandse standaard
+            const formatter = new Intl.NumberFormat('nl-NL', { minimumFractionDigits: 2 });
+
+            document.getElementById('avgWidget').innerText = formatter.format(average) + " kW";
+            document.getElementById('peakWidget').innerText = formatter.format(peak) + " kW";
+
+            // --- ALARM SYSTEEM LOGICA (Türkçe: Alarm Sistemi Mantığı) ---
+            const statusBox = document.getElementById('statusWidgetParent'); // Kartın kendisi
+            const statusText = document.getElementById('statusText'); // "Operationeel" yazısı
+
+            if (peak > 1000) {
+                // Kritieke status: Rode kleur en waarschuwing
+                statusText.innerText = "Kritiek: Hoge Belasting";
+                statusText.classList.replace('text-success', 'text-danger');
+                // Voeg een knipperend effect toe voor extra attentie
+                statusText.style.animation = "blink 1s infinite";
+            } else {
+                // Normale status: Groene kleur
+                statusText.innerText = "Operationeel";
+                statusText.classList.replace('text-danger', 'text-success');
+                statusText.style.animation = "none";
+            }
+        }
+
+        // Render de grafiek met neon kleuren
+        function renderChart(data) {
+            const ctx = document.getElementById('energyChart').getContext('2d');
+            if (myChart) { myChart.destroy(); }
+
+            // Maak een gradiënt voor de lijn
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(88, 166, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(88, 166, 255, 0)');
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => new Date(d.timestamp).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit' })),
+                    datasets: [{
+                        label: 'Verbruik (kW)',
+                        data: data.map(d => d.value),
+                        borderColor: '#58a6ff', // Neon blauw
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: 0 },
+                    scales: {
+                        x: {
+                            grid: { color: '#30363d' }, // Donkere grid lijnen
+                            ticks: { color: '#8b949e', maxTicksLimit: 12 }
+                        },
+                        y: {
+                            grid: { color: '#30363d' },
+                            ticks: { color: '#8b949e' },
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Vul de tabel met geformatteerde data
+        function renderTable(data) {
+            const tableBody = document.getElementById('readingTable');
+            tableBody.innerHTML = '';
+            const laatsteVijf = data.slice(-5).reverse();
+
+            laatsteVijf.forEach(item => {
+                const formattedValue = new Intl.NumberFormat('nl-NL', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(item.value);
+
+                tableBody.innerHTML += `
+                        <tr>
+                            <td><strong style="color: #8b949e;">#${item.id}</strong></td>
+                            <td>${item.sensorName}</td>
+                            <td class="text-primary fw-bold">${formattedValue} kW</td>
+                            <td style="color: #8b949e;">${new Date(item.timestamp).toLocaleString('nl-NL')}</td>
+                        </tr>`;
+            });
+        }
+        function exportEnergyDataToCSV() {
+            // Stel de bestandsnaam in
+            const reportDate = new Date().toLocaleDateString('nl-NL').replace(/\//g, '-');
+            const fileName = `Energie_Rapport_${reportDate}.csv`;
+
+            // Header rij voor het Excel bestand
+            let csvContent = "data:text/csv;charset=utf-8,ID;Sensor;Waarde (kW);Tijdstip\n";
+
+            // Selecteer specifiek de rijen in de tabel die data bevatten
+            const tableBody = document.querySelector("#readingTable");
+            const rows = tableBody.querySelectorAll("tr");
+
+            // Controleer of er rijen zijn om te exporteren
+            if (rows.length === 0) {
+                console.error("Geen data gevonden om te exporteren.");
+                return;
+            }
+
+            rows.forEach(row => {
+                const columns = row.querySelectorAll("td");
+
+                // Alleen rijen met data verwerken
+                if (columns.length > 0) {
+                    const rowData = Array.from(columns)
+                        .map(col => col.innerText.replace(" kW", "").trim())
+                        .join(";");
+                    csvContent += rowData + "\n";
+                }
+            });
+
+            // Start de download
+            const encodedUri = encodeURI(csvContent);
+            const downloadLink = document.createElement("a");
+            downloadLink.setAttribute("href", encodedUri);
+            downloadLink.setAttribute("download", fileName);
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+
+            // Toon een korte melding in de console in plaats van een alert
+            console.log(`Bestand gedownload: ${fileName}`);
+        }
+        
+        window.onload = loadData;
+    </script>
+</body>
+</html>
