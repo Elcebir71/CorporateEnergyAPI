@@ -174,4 +174,4 @@ Suggested flow:
 
 ## License
 
-No license file is currently defined. Add a `LICENSE` file if needed.
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
