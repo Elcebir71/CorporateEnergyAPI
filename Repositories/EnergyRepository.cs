@@ -25,9 +25,9 @@ namespace CorporateEnergyAPI.Repositories
                 // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
 
                 var sql = @"
-                SELECT Id, Timestamp, Price_MWh, Is_Green_Energy, System_Code
+                SELECT ""Id"" as ""Id"", ""Timestamp"" as ""Timestamp"", ""Price_MWh"" as ""Price_MWh"", ""Is_Green_Energy"" as ""Is_Green_Energy"", ""System_Code"" as ""System_Code""
                 FROM ""EuropeanEnergyData""
-                ORDER BY Timestamp DESC
+                ORDER BY ""Timestamp"" DESC
                 LIMIT 30";
 
                 return await connection.QueryAsync<EnergyModel>(sql);
@@ -46,9 +46,9 @@ namespace CorporateEnergyAPI.Repositories
 
             // Gebruik OFFSET en FETCH om door de 1.8M rijen te navigeren           
             var sql = @"
-                SELECT Id, Timestamp, Price_MWh, Is_Green_Energy, System_Code
+                SELECT ""Id"" as ""Id"", ""Timestamp"" as ""Timestamp"", ""Price_MWh"" as ""Price_MWh"", ""Is_Green_Energy"" as ""Is_Green_Energy"", ""System_Code"" as ""System_Code""
                 FROM ""EuropeanEnergyData""
-                ORDER BY Timestamp ASC
+                ORDER BY ""Timestamp"" ASC
                 OFFSET @Offset ROWS FETCH NEXT 20 ROWS ONLY";
 
             return await connection.QueryAsync<EnergyModel>(sql, new { Offset = offset });
