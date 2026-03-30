@@ -1,5 +1,5 @@
 using Npgsql;
-﻿using CorporateEnergyAPI.Interfaces;
+using CorporateEnergyAPI.Interfaces;
 using CorporateEnergyAPI.Models;
 
 using Dapper;
@@ -8,7 +8,12 @@ namespace CorporateEnergyAPI.Repositories
 {
     public class EnergyRepository : IEnergyRepository
     {
-        private readonly string _connectionString = "Server=localhost,1444;Database=CorporateEnergyDb;User Id=sa;Password=NjKrK1825!;TrustServerCertificate=True;";
+        private readonly string _connectionString;
+
+        public EnergyRepository(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
 
         // Standaard dashboard data (Standart dashboard verisi)
         public async Task<IEnumerable<EnergyModel>> GetEnergyMarketDataAsync()
@@ -16,15 +21,15 @@ namespace CorporateEnergyAPI.Repositories
             using var connection = new NpgsqlConnection(_connectionString);
 
             // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
-          
+
             var sql = @"
-                SELECT TOP 30
-                    Timestamp, 
+                SELECT Timestamp, 
                     Price_MWh,
                     Is_Green_Energy,
                     System_Code
                 FROM EuropeanEnergyData
-                ORDER BY Timestamp DESC";
+                ORDER BY Timestamp DESC
+                LIMIT 30";
 
             return await connection.QueryAsync<EnergyModel>(sql);
         }
