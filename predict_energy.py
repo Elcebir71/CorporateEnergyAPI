@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 from sqlalchemy import create_engine, text
 from datetime import datetime
 
-engine = create_engine("postgresql+psycopg2://postgres:hpDMYvMroMBWZLkcstUaLdHEUbrTqNao@hopper.proxy.rlwy.net:13202/railway")
+engine = create_engine("postgresql+psycopg2://USER:PASSWORD@HOST:PORT/railway")
 
 def get_data():
     df = pd.read_sql('SELECT "Timestamp", "Price_MWh" FROM "EuropeanEnergyData" ORDER BY "Timestamp" DESC LIMIT 10000', engine)

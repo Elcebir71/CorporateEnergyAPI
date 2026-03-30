@@ -482,3 +482,4 @@ $RECYCLE.BIN/
 *.swp
 
 weather_fixed.csv
+predict_energy.py
