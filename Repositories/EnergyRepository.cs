@@ -29,7 +29,7 @@ namespace CorporateEnergyAPI.Repositories
                     Price_MWh,
                     Is_Green_Energy,
                     System_Code
-                FROM EuropeanEnergyData
+                FROM ""EuropeanEnergyData""
                 ORDER BY Timestamp DESC
                 LIMIT 30";
 
@@ -54,7 +54,7 @@ namespace CorporateEnergyAPI.Repositories
                     Price_MWh, 
                     Is_Green_Energy, 
                     System_Code
-                FROM EuropeanEnergyData
+                FROM ""EuropeanEnergyData""
                 ORDER BY Timestamp ASC 
                 OFFSET @Offset ROWS FETCH NEXT 20 ROWS ONLY";
 
