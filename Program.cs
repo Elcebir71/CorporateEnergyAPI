@@ -31,13 +31,9 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CorporateEnergyAPI v1"));
-}
-
-    app.UseHttpsRedirection();
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CorporateEnergyAPI v1"));
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthorization();
 app.UseAntiforgery();
