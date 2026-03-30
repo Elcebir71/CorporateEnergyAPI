@@ -25,7 +25,8 @@ namespace CorporateEnergyAPI.Repositories
                 // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
 
                 var sql = @"
-                SELECT ""Timestamp"", 
+                SELECT  ""Id"",
+                        ""Timestamp"", 
                         ""Price_MWh"",
                         ""Is_Green_Energy"",
                         ""System_Code""
@@ -49,7 +50,8 @@ namespace CorporateEnergyAPI.Repositories
 
             // Gebruik OFFSET en FETCH om door de 1.8M rijen te navigeren           
             var sql = @"
-                SELECT ""Timestamp"", 
+                SELECT  ""Id"",
+                        ""Timestamp"", 
                         ""Price_MWh"",
                         ""Is_Green_Energy"",
                         ""System_Code""
