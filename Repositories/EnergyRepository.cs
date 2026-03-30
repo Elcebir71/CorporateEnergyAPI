@@ -35,10 +35,10 @@ namespace CorporateEnergyAPI.Repositories
 
                 return await connection.QueryAsync<EnergyModel>(sql);
             }
-            catch
+            catch (Exception ex)
             {
-                // Log de fout (gebruik een logging framework zoals Serilog of NLog in een echte applicatie)
-                return Enumerable.Empty<EnergyModel>(); // Her-throw de fout zodat deze door de service laag kan worden afgehandeld
+                Console.WriteLine($"EnergyRepository ERROR: {ex.Message}");
+                return Enumerable.Empty<EnergyModel>();
             }
         }
 
