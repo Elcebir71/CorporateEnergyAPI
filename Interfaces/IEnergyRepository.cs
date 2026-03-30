@@ -5,5 +5,6 @@ namespace CorporateEnergyAPI.Interfaces
     {
         Task<IEnumerable<EnergyModel>> GetEnergyMarketDataAsync();
         Task<IEnumerable<EnergyModel>> GetSimulationStepAsync(int offset);
+        Task<IEnumerable<EnergyPrediction>> GetLatestPredictionsAsync();
     }
 }

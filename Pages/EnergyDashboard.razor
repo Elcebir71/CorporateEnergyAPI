@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/old"
 @using CorporateEnergyAPI.Interfaces
 @using CorporateEnergyAPI.Models
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
@@ -85,23 +85,23 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_chartRendered || dashboardData?.AllReadings == null || dashboardData.AllReadings.Count == 0)
+        if (_chartRendered || dashboardData?.LatestEnergyPrices == null || dashboardData.LatestEnergyPrices.Count == 0)
             return;
 
         await Task.Delay(100);
 
-        var labels = dashboardData.AllReadings.Select(r => r.Timestamp.ToString("dd/MM")).ToArray();
-        var values = dashboardData.AllReadings.Select(r => r.Value).ToArray();
-
-        await JSRuntime.InvokeVoidAsync("setupLineChart", "energyChart", labels, values);
+        var labels = dashboardData.LatestEnergyPrices.Select(r => r.Timestamp.ToString("dd/MM")).ToArray();
+        var values = dashboardData.LatestEnergyPrices.Select(r => r.Price_MWh).ToArray();
         _chartRendered = true;
+        await JSRuntime.InvokeVoidAsync("setupLineChart", "energyChart", labels, values);
+        
     }
 
     private async Task ExportToExcel()
     {
-        if (dashboardData?.AllReadings == null)
+        if (dashboardData?.LatestEnergyPrices == null)
             return;
 
-        await JSRuntime.InvokeVoidAsync("downloadCsvFromBlazor", "Energie_Rapport.csv", dashboardData.AllReadings);
+        await JSRuntime.InvokeVoidAsync("downloadCsvFromBlazor", "Energie_Rapport.csv", dashboardData.LatestEnergyPrices);
     }
 }

@@ -1,7 +1,6 @@
 using Npgsql;
 using CorporateEnergyAPI.Interfaces;
 using CorporateEnergyAPI.Models;
-
 using Dapper;
 
 namespace CorporateEnergyAPI.Repositories
@@ -12,46 +11,62 @@ namespace CorporateEnergyAPI.Repositories
 
         public EnergyRepository(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
-        // Standaard dashboard data (Standart dashboard verisi)
         public async Task<IEnumerable<EnergyModel>> GetEnergyMarketDataAsync()
         {
-            try
-            {
-                using var connection = new NpgsqlConnection(_connectionString);
-
-                // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
-
-                var sql = @"
-                SELECT ""Id"" as ""Id"", ""Timestamp"" as ""Timestamp"", ""Price_MWh"" as ""Price_MWh"", ""Is_Green_Energy"" as ""Is_Green_Energy"", ""System_Code"" as ""System_Code""
+            using var connection = new NpgsqlConnection(_connectionString);
+            var sql = @"SELECT ""Id"", ""Timestamp"", ""Price_MWh"", ""Is_Green_Energy"", ""System_Code""
                 FROM ""EuropeanEnergyData""
                 ORDER BY ""Timestamp"" DESC
                 LIMIT 30";
-
-                return await connection.QueryAsync<EnergyModel>(sql);
-            }
-            catch (Exception ex)
+            var rows = await connection.QueryAsync<dynamic>(sql);
+            return rows.Select(r => new EnergyModel
             {
-                Console.WriteLine($"EnergyRepository ERROR: {ex.Message}");
-                return Enumerable.Empty<EnergyModel>();
-            }
+                Id = Convert.ToInt32(r.Id),
+                Timestamp = Convert.ToDateTime(r.Timestamp),
+                Price_MWh = Convert.ToDouble(r.Price_MWh),
+                Is_Green_Energy = Convert.ToInt32(r.Is_Green_Energy),
+                System_Code = (string)r.System_Code
+            });
         }
 
-        // Nieuwe methode voor de live simulatie 
         public async Task<IEnumerable<EnergyModel>> GetSimulationStepAsync(int offset)
         {
             using var connection = new NpgsqlConnection(_connectionString);
-
-            // Gebruik OFFSET en FETCH om door de 1.8M rijen te navigeren           
-            var sql = @"
-                SELECT ""Id"" as ""Id"", ""Timestamp"" as ""Timestamp"", ""Price_MWh"" as ""Price_MWh"", ""Is_Green_Energy"" as ""Is_Green_Energy"", ""System_Code"" as ""System_Code""
+            var sql = @"SELECT ""Id"", ""Timestamp"", ""Price_MWh"", ""Is_Green_Energy"", ""System_Code""
                 FROM ""EuropeanEnergyData""
-                ORDER BY ""Timestamp"" ASC
-                OFFSET @Offset ROWS FETCH NEXT 20 ROWS ONLY";
+                ORDER BY ""Timestamp"" DESC
+                LIMIT 20 OFFSET @Offset";
+            var rows = await connection.QueryAsync<dynamic>(sql, new { Offset = offset });
+            return rows.Select(r => new EnergyModel
+            {
+                Id = Convert.ToInt32(r.Id),
+                Timestamp = Convert.ToDateTime(r.Timestamp),
+                Price_MWh = Convert.ToDouble(r.Price_MWh),
+                Is_Green_Energy = Convert.ToInt32(r.Is_Green_Energy),
+                System_Code = (string)r.System_Code
+            });
+        }
 
-            return await connection.QueryAsync<EnergyModel>(sql, new { Offset = offset });
+        public async Task<IEnumerable<EnergyPrediction>> GetLatestPredictionsAsync()
+        {
+            using var connection = new NpgsqlConnection(_connectionString);
+            var sql = @"SELECT ""Id"", ""Timestamp"", ""ModelName"", ""PredictedPrice"", ""ActualPrice"", ""IsBestModel""
+                FROM ""EnergyPredictions""
+                ORDER BY ""Timestamp"" DESC
+                LIMIT 5";
+            var rows = await connection.QueryAsync<dynamic>(sql);
+            return rows.Select(r => new EnergyPrediction
+            {
+                Id = Convert.ToInt32(r.Id),
+                Timestamp = Convert.ToDateTime(r.Timestamp),
+                ModelName = (string)r.ModelName,
+                PredictedPrice = Convert.ToDouble(r.PredictedPrice),
+                ActualPrice = Convert.ToDouble(r.ActualPrice),
+                IsBestModel = Convert.ToBoolean(r.IsBestModel)
+            });
         }
     }
 }

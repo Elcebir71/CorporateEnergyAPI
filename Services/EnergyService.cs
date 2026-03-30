@@ -23,23 +23,23 @@ namespace CorporateEnergyAPI.Services
             // Haal alle industriële gegevens en marktprijzen op (Tüm endüstriyel verileri ve piyasa fiyatlarını çek)
             var readings = await _repository.GetAllReadingsAsync();
             var energyData = await _energyRepository.GetEnergyMarketDataAsync();
-            var allReadingsList = readings.ToList();
+            var energyList = energyData.ToList();
+            var predictions = await _energyRepository.GetLatestPredictionsAsync();
 
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
-            var last30DaysReadings = allReadingsList
+            var last30DaysReadings = readings
                 .Where(r => r.Timestamp >= thirtyDaysAgo)
                 .OrderBy(r => r.Timestamp)
                 .ToList();
 
             return new EnergyDashboardViewModel
             {
-                AllReadings = new List<IndustrialReading>(last30DaysReadings),
-                TableReadings = new List<IndustrialReading>(allReadingsList
-                    .OrderByDescending(r => r.Timestamp)
-                    .Take(5)),
-                AverageUsage = allReadingsList.Count > 0 ? allReadingsList.Average(r => r.Value) : 0,
-                PeakUsage = allReadingsList.Count > 0 ? allReadingsList.Max(r => r.Value) : 0,
-                LatestEnergyPrices = new List<EnergyModel>(energyData)
+                AllReadings = readings.ToList(),
+                TableReadings = readings.OrderByDescending(r => r.Timestamp).Take(5).ToList(),
+                AverageUsage = energyList.Count > 0 ? energyList.Average(r => r.Price_MWh) : 0,
+                PeakUsage = energyList.Count > 0 ? energyList.Max(r => r.Price_MWh) : 0,
+                LatestEnergyPrices = energyList,
+                Predictions = predictions.ToList()
             };
         }
 
@@ -52,12 +52,16 @@ namespace CorporateEnergyAPI.Services
             var simulatedPrices = await _energyRepository.GetSimulationStepAsync(offset);
 
             // Retourneer een ViewModel dat specifiek is geformatteerd voor de simulatie-UI
-            
+
             return new EnergyDashboardViewModel
             {
                 LatestEnergyPrices = new List<EnergyModel>(simulatedPrices)
                 // Berekeningen kunnen hier indien nodig worden toegevoegd
             };
+        }
+        public async Task<IEnumerable<EnergyPrediction>> GetLatestPredictionsAsync()
+        {
+            return await _energyRepository.GetLatestPredictionsAsync();
         }
     }
 }
