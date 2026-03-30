@@ -1,6 +1,7 @@
+using Npgsql;
 ﻿using CorporateEnergyAPI.Interfaces;
 using CorporateEnergyAPI.Models;
-using Microsoft.Data.SqlClient;
+
 using Dapper;
 
 namespace CorporateEnergyAPI.Repositories
@@ -12,7 +13,7 @@ namespace CorporateEnergyAPI.Repositories
         // Standaard dashboard data (Standart dashboard verisi)
         public async Task<IEnumerable<EnergyModel>> GetEnergyMarketDataAsync()
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
 
             // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
           
@@ -31,7 +32,7 @@ namespace CorporateEnergyAPI.Repositories
         // Nieuwe methode voor de live simulatie 
         public async Task<IEnumerable<EnergyModel>> GetSimulationStepAsync(int offset)
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
 
             // Gebruik OFFSET en FETCH om door de 1.8M rijen te navigeren           
             var sql = @"
