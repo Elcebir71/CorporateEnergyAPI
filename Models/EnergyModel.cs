@@ -2,6 +2,8 @@
 {
     public class EnergyModel
     {
+
+        public int Id { get; set; }
         public DateTime Timestamp { get; set; }
 
         // De energieprijs per Megawattuur (MWh başına enerji fiyatı)

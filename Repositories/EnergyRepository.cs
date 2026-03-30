@@ -18,11 +18,13 @@ namespace CorporateEnergyAPI.Repositories
         // Standaard dashboard data (Standart dashboard verisi)
         public async Task<IEnumerable<EnergyModel>> GetEnergyMarketDataAsync()
         {
-            using var connection = new NpgsqlConnection(_connectionString);
+            try
+            {
+                using var connection = new NpgsqlConnection(_connectionString);
 
-            // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
+                // Let op: Verwijder CAST(AS DATE) om uren te behouden voor de simulatie
 
-            var sql = @"
+                var sql = @"
                 SELECT Timestamp, 
                     Price_MWh,
                     Is_Green_Energy,
@@ -31,7 +33,13 @@ namespace CorporateEnergyAPI.Repositories
                 ORDER BY Timestamp DESC
                 LIMIT 30";
 
-            return await connection.QueryAsync<EnergyModel>(sql);
+                return await connection.QueryAsync<EnergyModel>(sql);
+            }
+            catch
+            {
+                // Log de fout (gebruik een logging framework zoals Serilog of NLog in een echte applicatie)
+                return Enumerable.Empty<EnergyModel>(); // Her-throw de fout zodat deze door de service laag kan worden afgehandeld
+            }
         }
 
         // Nieuwe methode voor de live simulatie 

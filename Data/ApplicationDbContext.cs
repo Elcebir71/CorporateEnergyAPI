@@ -7,7 +7,8 @@ namespace CorporateEnergyAPI.Data
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
-        
+
         public DbSet<IndustrialReading> IndustrialReadings { get; set; }
+        public DbSet<EnergyModel> EuropeanEnergyData { get; set; }
     }
 }
